@@ -163,7 +163,7 @@
     $('aiSend').disabled=ui.sending||ui.reading>0;
     const root=$('aiImageChips');root.replaceChildren();
     d.images.forEach((image,i)=>{const chip=E('div','ai-image-chip'),img=E('img');img.src=image.url;img.alt=image.name;
-      const remove=IB('close','Remover imagem '+image.name,()=>{if(ui.sending)return;d.images.splice(i,1);drawComposer();});
+      const remove=IB('close','Remover imagem '+image.name,()=>{if(ui.sending)return;d.images.splice(i,1);d.requestId=crypto.randomUUID();drawComposer();});
       chip.append(img,E('span','',image.name),remove);root.append(chip);});
   }
   async function attach(files) {
@@ -174,7 +174,7 @@
         if(d.images.length>=3)throw new Error('Envie no máximo três imagens por mensagem.');
         if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>4*1024*1024)throw new Error('Use PNG, JPG, WEBP ou GIF de até 4 MB.');
         if(d.images.reduce((n,i)=>n+i.url.length*0.75,0)+file.size>8*1024*1024)throw new Error('As imagens juntas precisam ter até 8 MB.');
-        d.images.push({name:file.name,url:await readData(file)});
+        d.images.push({name:file.name,url:await readData(file)});d.requestId=crypto.randomUUID();
       }
     }catch(err){toast(err.message);}finally{ui.reading--;drawComposer();}
   }
@@ -307,7 +307,7 @@
   bindIcon('aiAttach','attach',()=>$('aiFiles').click());bindIcon('aiSend','send');bindIcon('aiAddTask','plus',addItem);
   $('aiAutomationButton').onclick=()=>aiSettings('automation');
   $('aiStop').onclick=async()=>{if(ui.thread?.id)try{await api('/assistant/threads/'+ui.thread.id+'/cancel','POST',{});await loadThread(ui.thread.id,false);}catch(err){toast(err.message);}};
-  $('aiComposer').onsubmit=send;$('aiInput').oninput=()=>{getDraft().text=$('aiInput').value;};
+  $('aiComposer').onsubmit=send;$('aiInput').oninput=()=>{getDraft().text=$('aiInput').value;getDraft().requestId=crypto.randomUUID();};
   $('aiInput').onkeydown=ev=>{if(ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();$('aiComposer').requestSubmit();}};
   $('aiFiles').onchange=ev=>{attach(ev.target.files);ev.target.value='';};
   $('aiInput').onpaste=ev=>{const files=[...ev.clipboardData.files];if(files.length){ev.preventDefault();attach(files);}};

@@ -89,6 +89,7 @@ test('envios têm idempotência, limite diário, cancelamento e nenhum históric
   const thread=ai.store.create(),requestId=randomUUID();
   ai.start(thread.id,'owner',{text:'oi',requestId});const job=ai.jobs.get(thread.id);
   assert.equal(ai.start(thread.id,'owner',{text:'oi',requestId}).duplicate,true);
+  assert.throws(()=>ai.start(thread.id,'owner',{text:'rascunho alterado',requestId}),/outro conteúdo/);
   assert.equal(thread.messages.length,1);ai.cancel(thread.id);finish(response('Não enviar'));await job.promise;
   assert.equal(ai.jobs.size,0);assert.equal(thread.messages.at(-1).cancelled,true);
   ai.configure({dailyLimit:1});assert.throws(()=>ai.start(thread.id,'owner',{text:'mais',requestId:randomUUID()}),/Limite diário/);
