@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Seu espaço para conversar pelo seu bot: canais, mensagens e um perfil do seu jeito.">
+  <title>Botcord · a resenha</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="titlebar">
+    <span class="brand"><span class="brand-mark">B</span> botcord</span>
+    <span id="connectionState" class="connection-state">DEMONSTRAÇÃO</span>
+    <button id="connectButton" class="btn connect-button">Conectar bot</button>
+  </div>
+  <div id="workspace" class="workspace">
+    <nav id="servers" class="server-rail" aria-label="Servidores"></nav>
+    <aside id="sidebar" class="sidebar">
+      <div class="server-heading"><strong id="serverTitle">a resenha</strong><span id="serverChevron"></span></div>
+      <button id="quickSwitch" class="quick-switch">Encontre um canal <kbd>Ctrl K</kbd></button>
+      <nav id="channels" class="channel-list" aria-label="Canais"></nav>
+      <div class="user-panel">
+        <button id="selfButton" class="self-button" aria-label="Meu perfil"></button>
+        <button id="settingsButton" class="icon-button" aria-label="Configurações" title="Configurações"></button>
+      </div>
+    </aside>
+    <main class="chat">
+      <header class="chat-header">
+        <button id="mobileMenu" class="icon-button mobile-menu" aria-label="Abrir servidores e canais"></button>
+        <span id="headerHash" class="header-hash"></span>
+        <strong id="channelTitle">geral</strong>
+        <span id="channelTopic" class="channel-topic"></span>
+        <div class="search-wrap"><input id="search" type="search" placeholder="Buscar mensagens" aria-label="Buscar nas mensagens carregadas"></div>
+        <button id="membersButton" class="icon-button" aria-label="Alternar lista de membros" title="Membros"></button>
+      </header>
+      <div id="notice" class="notice"></div>
+      <div id="messageScroller" class="message-scroller">
+        <button id="olderButton" class="btn older-button" hidden>Carregar mensagens anteriores</button>
+        <div id="welcome" class="welcome">
+          <div id="welcomeIcon" class="welcome-icon"></div>
+          <h1 id="welcomeTitle"></h1><p id="welcomeText"></p>
+        </div>
+        <div id="messages" role="log" aria-label="Mensagens"></div>
+      </div>
+      <form id="composer" class="composer">
+        <div id="replyBar" class="reply-bar" hidden><span id="replyLabel"></span><button id="cancelReply" type="button" class="icon-button" aria-label="Cancelar resposta"></button></div>
+        <div id="fileChips" class="file-chips"></div>
+        <div class="compose-box">
+          <button id="attachButton" type="button" class="icon-button" aria-label="Anexar arquivos" title="Anexar arquivos"></button>
+          <textarea id="messageInput" aria-label="Mensagem" maxlength="2000" rows="1" placeholder="Conversar em #geral"></textarea>
+          <button id="emojiButton" type="button" class="icon-button" aria-label="Escolher emoji" title="Emojis"></button>
+          <button id="sendButton" type="submit" class="icon-button send-button" aria-label="Enviar mensagem" title="Enviar"></button>
+        </div>
+        <div class="compose-footer"><span id="typing" aria-live="polite"></span><span><span class="enter-hint">Enter para enviar · Shift + Enter para uma nova linha</span><span id="messageCount">0/2000</span></span></div>
+        <input id="fileInput" type="file" multiple hidden>
+      </form>
+    </main>
+    <aside id="members" class="members-panel"><h2 id="memberHeading">MEMBROS</h2><div id="memberList"></div><button id="moreMembers" class="btn" hidden>Carregar mais membros</button><div class="community-note"><span class="community-mark">✦</span><b>O seu cantinho.</b><p>Converse, compartilhe e deixe o perfil com a sua cara.</p></div></aside>
+  </div>
+  <button id="navBackdrop" class="nav-backdrop" aria-label="Fechar navegação" hidden></button>
+  <div id="toast" class="toast" role="status"></div>
+  <noscript>Ative o JavaScript para abrir o chat.</noscript>
+</body>
+</html>

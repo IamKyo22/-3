@@ -1,0 +1,30 @@
+name: Verificar Botcord
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Conferir sintaxe e segurança
+        run: npm run check && npm test
+      - name: Preparar navegador
+        run: npx playwright install --with-deps chromium
+      - name: Testar a interface
+        run: npm run test:ui
+      - name: Guardar capturas e falhas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: botcord-verificacao
+          path: test-results/
+          retention-days: 7

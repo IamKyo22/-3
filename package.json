@@ -1,0 +1,23 @@
+{
+  "name": "botcord",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Painel independente de conversa para um bot do Discord.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "preview": "node scripts/preview.mjs",
+    "check": "node --check app.js && node --check server.mjs",
+    "test": "node --test tests/security.test.mjs",
+    "test:ui": "playwright test"
+  },
+  "dependencies": {
+    "discord.js": "14.22.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1"
+  }
+}
