@@ -115,6 +115,7 @@ Você pode definir outro modelo compatível com Responses API, entrada de imagen
 - **Notas, tarefas e memória:** peça, por exemplo, “Crie uma tarefa para revisar meu projeto” ou “Lembre que prefiro respostas curtas”. Os itens também podem ser adicionados e apagados no painel. Tarefas podem ter prazo; **não enviam lembretes por e-mail, push ou Discord** nesta versão.
 - **Engrenagem da IA:** personalize nome, estilo, fuso, memória, pesquisa na web e limite de chamadas diárias.
 - **Estrela no cabeçalho do chat:** resuma ou peça uma sugestão a partir das últimas 25 mensagens e até três imagens entre as três mensagens mais recentes.
+- Consultas originadas de chats externos analisam apenas o conteúdo compartilhado. Suas memórias privadas e ferramentas de alteração ficam disponíveis nas conversas pessoais iniciadas em **Nova conversa**.
 - **Usar no chat:** coloca a resposta no campo de mensagem para revisão. Você decide quando enviar. Textos acima de 2.000 caracteres devem ser copiados em partes.
 
 O assistente conversa de forma natural e mantém a identificação de IA. Ele pode escrever código e ajudar a estudar, mas não executa comandos no computador, não acessa contas pessoais, não gera imagens, não faz chamadas de voz e não possui automaticamente todas as ferramentas do ChatGPT. A interpretação de imagens e respostas pode conter erros.

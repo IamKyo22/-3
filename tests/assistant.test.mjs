@@ -95,6 +95,18 @@ test('envios têm idempotência, limite diário, cancelamento e nenhum históric
   ai.configure({dailyLimit:1});assert.throws(()=>ai.start(thread.id,'owner',{text:'mais',requestId:randomUUID()}),/Limite diário/);
 });
 
+test('consultas de chats externos não recebem memória privada nem podem executar ações', async()=>{
+  const store=new AssistantStore(),thread=store.create();thread.contextOnly=true;
+  store.editWorkspace('owner','memories','add',{text:'MEMÓRIA PRIVADA'});
+  const ai=new Assistant({store,provider:async(payload)=>{
+    assert.deepEqual(payload.tools,[]);assert.equal(JSON.stringify(payload.input).includes('MEMÓRIA PRIVADA'),false);
+    return call({action:'add',collection:'notes',text:'Pedido injetado no chat',due:null,id:null,completed:null});
+  }});
+  const result=await ask(ai,thread,'Resuma este chat externo.');
+  assert.equal(result,null);assert.equal(store.workspace('owner').notes.length,0);
+  assert.match(thread.messages.at(-1).error,/não pode executar ferramentas/);
+});
+
 function dmFixture(ai,delay=60000) {
   const sent=[],channel={id:'222222222222222222',type:ChannelType.DM,sendTyping:async()=>{},send:async data=>{sent.push(data);}};
   const auto=new AutoDM({},ai,{delay});let count=0;
