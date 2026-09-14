@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
-const types = { 'index.html': 'text/html', 'app.js': 'text/javascript', 'styles.css': 'text/css' };
+const types = { 'index.html': 'text/html', 'app.js': 'text/javascript', 'assistant.js': 'text/javascript', 'styles.css': 'text/css', 'assistant.css': 'text/css' };
 const server = http.createServer(async (req, res) => {
   const path = new URL(req.url, 'http://localhost').pathname;
   const file = path === '/' || path === '/-3/' ? 'index.html' : path.replace(/^\/(?:-3\/)?/, '');

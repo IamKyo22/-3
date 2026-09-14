@@ -5,15 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
   <meta name="referrer" content="no-referrer">
-  <meta name="description" content="Seu espaço para conversar pelo seu bot: canais, mensagens e um perfil do seu jeito.">
+  <meta name="description" content="Seus servidores, conversas e um assistente de IA com imagens, contexto e organização pessoal.">
   <title>Botcord · a resenha</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./assistant.css">
   <script src="./app.js" defer></script>
+  <script src="./assistant.js" defer></script>
 </head>
 <body>
   <div class="titlebar">
     <span class="brand"><span class="brand-mark">B</span> botcord</span>
     <span id="connectionState" class="connection-state">DEMONSTRAÇÃO</span>
+    <span id="titleContext" class="title-context">Seu espaço. Suas conversas.</span>
     <button id="connectButton" class="btn connect-button">Conectar bot</button>
   </div>
   <div id="workspace" class="workspace">
@@ -21,7 +24,9 @@
     <aside id="sidebar" class="sidebar">
       <div class="server-heading"><strong id="serverTitle">a resenha</strong><span id="serverChevron"></span></div>
       <button id="quickSwitch" class="quick-switch">Encontre um canal <kbd>Ctrl K</kbd></button>
+      <button id="assistantShortcut" class="assistant-shortcut"><span class="nova-mini">✦</span><span>Meu assistente <small>IA</small></span></button>
       <nav id="channels" class="channel-list" aria-label="Canais"></nav>
+      <nav id="aiThreads" class="channel-list ai-threads" aria-label="Conversas com a IA" hidden></nav>
       <div class="user-panel">
         <button id="selfButton" class="self-button" aria-label="Meu perfil"></button>
         <button id="settingsButton" class="icon-button" aria-label="Configurações" title="Configurações"></button>
@@ -33,10 +38,12 @@
         <span id="headerHash" class="header-hash"></span>
         <strong id="channelTitle">geral</strong>
         <span id="channelTopic" class="channel-topic"></span>
+        <button id="channelAssistant" class="icon-button" aria-label="Consultar IA sobre este chat" title="Resumir ou sugerir uma resposta"></button>
         <div class="search-wrap"><input id="search" type="search" placeholder="Buscar mensagens" aria-label="Buscar nas mensagens carregadas"></div>
         <button id="membersButton" class="icon-button" aria-label="Alternar lista de membros" title="Membros"></button>
       </header>
       <div id="notice" class="notice"></div>
+      <div id="dmAutomation" class="dm-automation" hidden></div>
       <div id="messageScroller" class="message-scroller">
         <button id="olderButton" class="btn older-button" hidden>Carregar mensagens anteriores</button>
         <div id="welcome" class="welcome">
@@ -58,6 +65,45 @@
         <input id="fileInput" type="file" multiple hidden>
       </form>
     </main>
+    <section id="assistantView" class="chat ai-view" aria-label="Meu assistente virtual" hidden>
+      <header class="chat-header ai-header">
+        <button id="aiMobileMenu" class="icon-button mobile-menu" aria-label="Abrir navegação da IA"></button>
+        <span class="nova-mini">✦</span><strong id="aiName">Nova</strong><span class="ai-tag">IA</span>
+        <span id="aiModel" class="channel-topic">Seu assistente virtual</span>
+        <button id="aiNew" class="icon-button" aria-label="Nova conversa com a IA" title="Nova conversa"></button>
+        <button id="aiToolsToggle" class="icon-button" aria-label="Minhas notas e tarefas" title="Notas e tarefas"></button>
+        <button id="aiConfig" class="icon-button" aria-label="Configurações da IA" title="Configurações da IA"></button>
+      </header>
+      <div id="aiConnection" class="ai-connection"></div>
+      <div id="aiScroller" class="ai-scroller">
+        <div id="aiWelcome" class="ai-welcome">
+          <div class="nova-orbit"><span>✦</span><i></i><i></i></div>
+          <span class="eyebrow">UM ESPAÇO PARA AS SUAS IDEIAS</span>
+          <h1>O que vamos fazer hoje?</h1>
+          <p>Converse, entenda uma imagem ou tire uma ideia do papel. <br>Seu assistente acompanha o contexto com você.</p>
+          <div id="aiSuggestions" class="ai-suggestions"></div>
+        </div>
+        <div id="aiMessages" aria-label="Conversa com o assistente"></div>
+        <div id="aiProgress" class="ai-progress" role="status" hidden><span class="thinking-dots"><i></i><i></i><i></i></span><span id="aiProgressText">Pensando…</span></div>
+      </div>
+      <form id="aiComposer" class="ai-composer">
+        <div id="aiImageChips" class="ai-image-chips"></div>
+        <div class="ai-compose-box">
+          <textarea id="aiInput" rows="2" maxlength="16000" aria-label="Mensagem para a IA" placeholder="Pergunte qualquer coisa ou arraste uma imagem…"></textarea>
+          <div class="ai-compose-actions"><button id="aiAttach" type="button" class="icon-button" aria-label="Enviar imagem para a IA" title="Adicionar imagem"></button><span>Texto e imagens</span><button id="aiStop" type="button" class="btn" hidden>Interromper</button><button id="aiSend" type="submit" class="icon-button ai-send" aria-label="Enviar para a IA"></button></div>
+        </div>
+        <p class="ai-footnote">IA pode cometer erros. Confira informações importantes. <span id="aiBudget"></span></p>
+        <input id="aiFiles" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+      </form>
+    </section>
+    <aside id="assistantAside" class="assistant-aside" aria-label="Organização pessoal" hidden>
+      <div class="assistant-card"><span class="nova-mini">✦</span><strong>Seu segundo par de olhos.</strong><p>Ideias, contexto e pequenos detalhes, juntos em um lugar.</p></div>
+      <div class="ai-space-heading"><h2>MEU ESPAÇO</h2><button id="aiAddTask" class="icon-button" aria-label="Adicionar tarefa"></button></div>
+      <div class="ai-space-tabs"><button data-space="tasks" class="selected">Tarefas</button><button data-space="notes">Notas</button><button data-space="memories">Memória</button></div>
+      <div id="aiSpaceItems"></div>
+      <button id="aiAutomationButton" class="ai-automation-card"><span class="automation-light"></span><span><strong>Respostas automáticas</strong><small id="aiAutoLabel">Configure as DMs do bot</small></span><span>›</span></button>
+      <p class="ai-private-note">Conversas privadas no painel. Cada DM tem seu próprio contexto.</p>
+    </aside>
     <aside id="members" class="members-panel"><h2 id="memberHeading">MEMBROS</h2><div id="memberList"></div><button id="moreMembers" class="btn" hidden>Carregar mais membros</button><div class="community-note"><span class="community-mark">✦</span><b>O seu cantinho.</b><p>Converse, compartilhe e deixe o perfil com a sua cara.</p></div></aside>
   </div>
   <button id="navBackdrop" class="nav-backdrop" aria-label="Fechar navegação" hidden></button>

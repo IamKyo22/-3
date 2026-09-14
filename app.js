@@ -2,6 +2,10 @@
 const $ = id => document.getElementById(id);
 const EMOJIS = ['😀','😂','🥹','😭','😎','💀','🤡','❤️','💜','🔥','✨','👍','👎','👀','🎉','✅','⚡','🫡','🤝','🌙'];
 const ICONS = {
+  spark: '<path d="m12 3 2.8 6.2L21 12l-6.2 2.8L12 21l-2.8-6.2L3 12l6.2-2.8z"/>',
+  copy: '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  notebook: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M2 7h6M2 12h6M2 17h6M11 8h5M11 12h5"/>',
   hash: '<path d="M5 9h14M4 15h14M11 3L7 21M17 3l-4 18"/>',
   home: '<path d="M3 10l9-7 9 7v10H3zM9 20v-7h6v7"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
@@ -98,6 +102,8 @@ function imageURL(value) {
 }
 function avatar(p, dot=false) {
   const a=E('span','avatar',(p.initials||p.name||p.username||'?').slice(0,2).toUpperCase());
+  const hue=[...(p.id||p.name||'')].reduce((n,c)=>n+c.charCodeAt(0)*13,0)%360;
+  a.style.background=`linear-gradient(145deg,hsl(${hue} 38% 53%),hsl(${hue} 35% 32%))`;
   const url=imageURL(p.avatar||p.icon);
   if(url){const img=E('img');img.src=url;img.alt='';img.referrerPolicy='no-referrer';img.onerror=()=>img.remove();a.append(img);}
   if(dot)a.append(E('i','status-dot '+(p.status||'offline')));
@@ -144,11 +150,13 @@ function renderSelf() {
 }
 function renderServers() {
   const root=$('servers');root.replaceChildren();
-  const home=B('',()=>chooseGuild(null),'server '+(!state.guild?'selected':''));
+  const aiOpen=!!window.BotcordAI?.active;
+  const home=B('',()=>chooseGuild(null),'server '+(!state.guild&&!aiOpen?'selected':''));
   home.append(icon('home'));home.title='Mensagens diretas';home.setAttribute('aria-label','Mensagens diretas');
   root.append(home,E('div','rail-divider'));
+  const ai=B('',()=>window.BotcordAI?.show(),'server ai-server '+(aiOpen?'selected':''));ai.append(icon('spark'));ai.title='Meu assistente de IA';ai.setAttribute('aria-label',ai.title);root.append(ai);
   for(const g of state.guilds) {
-    const b=B('',()=>chooseGuild(g.id),'server '+(g.id===state.guild?'selected':''));
+    const b=B('',()=>chooseGuild(g.id),'server '+(g.id===state.guild&&!aiOpen?'selected':''));
     b.title=g.name;b.setAttribute('aria-label',g.name);b.append(avatar(g));
     if(state.unread[g.id])b.append(E('span','rail-unread'));root.append(b);
   }
@@ -157,7 +165,7 @@ function renderServers() {
   root.append(add,E('span','rail-bottom','BOTCORD'));
 }
 function renderChannels() {
-  $('serverTitle').textContent=state.guild?state.guilds.find(g=>g.id===state.guild)?.name||'Servidor':'Mensagens diretas';
+  $('serverTitle').textContent=window.BotcordAI?.active?'Seu assistente':state.guild?state.guilds.find(g=>g.id===state.guild)?.name||'Servidor':'Mensagens diretas';
   const root=$('channels');root.replaceChildren();
   if(!state.guild)root.append(B('+ Nova mensagem direta',newDM,'channel dm-add'));
   let category='';
@@ -209,13 +217,16 @@ function renderMessages(bottom=false) {
   $('channelTitle').textContent=ch?.name||'Escolha um canal';$('channelTopic').textContent=ch?.topic||'';
   $('welcomeTitle').textContent=ch?'Bem-vindo a #'+ch.name+'!':'Sua conversa começa aqui';
   $('welcomeText').textContent=ch?'Este é o espaço de #'+ch.name+'.':'Escolha um canal ou abra uma mensagem direta.';
-  document.title=(ch?'#'+ch.name+' · ':'')+'Botcord';
-  const root=$('messages');root.replaceChildren();let lastDate='';
+  if(!window.BotcordAI?.active){document.title=(ch?'#'+ch.name+' · ':'')+'Botcord';
+    $('titleContext').textContent=ch?(state.guild?'# ':'@ ')+ch.name:'Seu espaço. Suas conversas.';}
+  const root=$('messages');root.replaceChildren();let lastDate='',previous=null;
   const filtered=state.messages.filter(m=>(m.content+' '+m.author.name).toLocaleLowerCase().includes(query));
   for(const m of filtered){
     const date=new Date(m.time).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
     if(date!==lastDate){root.append(E('div','date-divider',date));lastDate=date;}
     const row=E('article','message');row.tabIndex=0;row.id='message-'+m.id;row.dataset.messageId=m.id;
+    if(previous&&previous.author.id===m.author.id&&m.time-previous.time<300000&&!m.replyId)row.classList.add('message-grouped');
+    previous=m;
     const av=B('',()=>showProfile(m.author),'avatar-button');av.setAttribute('aria-label','Perfil de '+m.author.name);av.append(avatar(m.author));
     const body=E('div','message-body'),heading=E('div','message-heading'),name=B(m.author.name,()=>showProfile(m.author),'author');
     if(/^#[0-9a-f]{6}$/i.test(m.author.color||''))name.style.color=m.author.color;
@@ -240,6 +251,7 @@ function renderMessages(bottom=false) {
     body.append(reactions);
     const actions=E('div','message-actions');
     actions.append(IB('emoji','Reagir',()=>emojiPicker(emoji=>react(m,emoji,false))),IB('reply','Responder',()=>reply(m)));
+    actions.append(IB('spark','Pedir ajuda à IA',()=>window.BotcordAI?.context('draft')));
     if(m.author.id===state.me.id)actions.append(IB('edit','Editar mensagem',()=>editMessage(m)),IB('trash','Excluir mensagem',()=>deleteMessage(m)));
     row.append(av,body,actions);root.append(row);
   }
@@ -274,12 +286,13 @@ async function api(path,method='GET',data) {
   if(requestToken!==state.token)throw new Error('A conexão do painel mudou.');
   let value;try{value=await res.json();}catch{throw new Error('O servidor não retornou uma resposta válida.');}
   if(!res.ok){
-    if(res.status===401&&state.real){state.token='';state.live=false;stopStream();renderSelf();settings('connection');}
+    if(res.status===401&&state.real){state.token='';state.live=false;stopStream();window.BotcordAI?.reset();renderSelf();settings('connection');}
     throw new Error(value.error||'Não foi possível concluir.');
   }
   return value;
 }
 async function chooseGuild(gid) {
+  window.BotcordAI?.hide();
   const nav=++state.navigation;++state.sequence;state.guild=gid;state.channel=null;state.messages=[];
   state.channels=[];state.members=[];state.after=null;state.loading=false;state.more=false;delete state.unread[gid];
   renderServers();renderChannels();renderMessages();renderComposer();renderMembers();
@@ -295,6 +308,7 @@ async function chooseGuild(gid) {
   }catch(err){if(nav===state.navigation)toast(err.message);}
 }
 async function chooseChannel(ch) {
+  window.BotcordAI?.hide();
   if(!ch.text)return;const seq=++state.sequence;
   state.channel=ch;state.messages=[];state.loading=true;state.more=false;
   delete state.unread[ch.id];$('search').value='';$('typing').textContent='Carregando mensagens…';hideNavigation();
@@ -303,7 +317,7 @@ async function chooseChannel(ch) {
     const list=state.real?await api('/channels/'+ch.id+'/messages'):(database[ch.id]||[]);
     if(seq!==state.sequence)return;state.messages=mergeMessages(list,state.messages);state.more=state.real&&list.length===50;
   }catch(err){if(seq===state.sequence)toast(err.message);}
-  finally{if(seq===state.sequence){state.loading=false;$('typing').textContent='';renderMessages(true);renderComposer();}}
+  finally{if(seq===state.sequence){state.loading=false;$('typing').textContent='';renderMessages(true);renderComposer();window.BotcordAI?.renderDM();}}
 }
 async function olderMessages() {
   if(!state.real||!state.messages.length)return;
@@ -393,6 +407,7 @@ async function attachFiles(input) {
 }
 
 function settings(tab='profile') {
+  if(tab==='assistant'){window.BotcordAI?.settings();return;}
   document.querySelector('dialog.settings')?.close();
   const {d,body}=dialog('Configurações','settings');body.className='settings-shell';
   const nav=E('nav','settings-nav'),main=E('div','settings-main');nav.append(E('span','eyebrow','SEU ESPAÇO'));
@@ -403,6 +418,7 @@ function settings(tab='profile') {
     const section=E('section');section.dataset.page=key;pages.set(key,section);main.append(section);
   }
   body.append(nav,main);
+  nav.append(B('Assistente de IA',()=>{d.close();window.BotcordAI?.settings();},'settings-tab'));
   // Global profile, server nickname and presence are independent saves.
   const profile=pages.get('profile'),grid=E('div','profile-grid'),form=E('form'),preview=E('div','profile-preview');
   profile.append(E('h3','','Meu perfil'),grid);grid.append(form,preview);
@@ -520,7 +536,7 @@ async function startStream() {
   const controller=new AbortController();state.stream=controller;
   try{
     const response=await fetch(state.origin+'/api/events',{headers:{Authorization:'Bearer '+state.token},signal:controller.signal});
-    if(response.status===401){state.token='';state.live=false;renderSelf();settings('connection');return;}
+    if(response.status===401){state.token='';state.live=false;window.BotcordAI?.reset();renderSelf();settings('connection');return;}
     if(!response.ok)throw new Error('Conexão ao vivo indisponível.');
     const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
     while(true){
@@ -529,6 +545,7 @@ async function startStream() {
       while((newline=buffer.indexOf('\n'))>=0){
         const line=buffer.slice(0,newline);buffer=buffer.slice(newline+1);if(!line)continue;
         const event=JSON.parse(line);
+        if(event.type.startsWith('assistant_'))window.BotcordAI?.event(event);
         if(event.type==='ready'){state.live=true;renderSelf();refreshMessages(true);syncStructure();}
         if(event.type==='heartbeat'){state.live=event.ready;renderSelf();}
         if(event.type==='profile'){state.me=event.me;renderSelf();}
@@ -576,16 +593,18 @@ async function connect(ev,address,password,button,d) {
     const session=await response.json();if(!response.ok)throw new Error(session.error||'Não foi possível entrar.');
     const infoResponse=await fetch(url.origin+'/api/state',{headers:{Authorization:'Bearer '+session.token},signal:AbortSignal.timeout(45000)});
     const info=await infoResponse.json();if(!infoResponse.ok)throw new Error(info.error||'Não foi possível carregar o bot.');
-    stopStream();state.origin=url.origin;state.token=session.token;state.real=true;state.live=false;
+    stopStream();window.BotcordAI?.reset();state.origin=url.origin;state.token=session.token;state.real=true;state.live=false;
     state.me=info.me;state.guilds=info.guilds;state.dms=info.dms;state.invite=info.invite;state.unread={};state.drafts={};state.collapsed.clear();
     persist('botcord.server',state.origin);password.value='';d.close();renderSelf();
     await chooseGuild(state.guilds[0]?.id||null);startStream();toast('Bot conectado.');
+    window.BotcordAI?.refresh();
   }catch(err){toast(err.message||'Não foi possível conectar. Confira o endereço do servidor.');}
   finally{button.disabled=false;}
 }
 async function disconnect(d) {
   try{if(state.token)await api('/logout','POST',{});}catch{}
   stopStream();state.token='';state.real=false;state.live=false;state.me=demoMe;state.guilds=demoGuilds;state.dms=[];state.drafts={};state.unread={};state.collapsed.clear();
+  window.BotcordAI?.reset();
   d?.close();renderSelf();chooseGuild('resenha');
 }
 function newDM() {
@@ -611,6 +630,7 @@ function hideNavigation(){document.body.classList.remove('show-nav');$('navBackd
 function bindIcon(id,name,handler){$(id).append(icon(name));if(handler)$(id).onclick=handler;}
 bindIcon('serverChevron','chevron');bindIcon('headerHash','hash');bindIcon('welcomeIcon','hash');
 bindIcon('settingsButton','settings',()=>settings());
+bindIcon('channelAssistant','spark',()=>window.BotcordAI?.contextMenu());
 bindIcon('mobileMenu','menu',()=>{const show=document.body.classList.toggle('show-nav');$('navBackdrop').hidden=!show;});
 bindIcon('membersButton','people',()=>document.body.classList.toggle(innerWidth>1150?'hide-members':'show-members'));
 bindIcon('attachButton','attach',()=>$('fileInput').click());
